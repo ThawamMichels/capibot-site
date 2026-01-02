@@ -24,6 +24,9 @@ const ASSETS = {
   // Ícones dos serviços
   capichatIcon: '/assets/images/capichat-icon.png',
   
+  // Dashboard/métricas
+  dashboard: '/assets/images/dashboard.png',
+  
   // Logos dos parceiros
   resolvooLogo: '/assets/images/parceiro-resolvoo.png',
   garanteDireitoLogo: '/assets/images/parceiro-garantedireito.png',
@@ -64,6 +67,7 @@ export const SITE_CONFIG = {
   // Assets
   logo: ASSETS.logo,
   heroLogo: ASSETS.heroLogo,
+  dashboard: ASSETS.dashboard,
   videoBackground: ASSETS.videoBackground,
   videoIA: ASSETS.videoIA,
 }
