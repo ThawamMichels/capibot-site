@@ -1,0 +1,292 @@
+import { useState } from 'react'
+import { QUIZ_PERGUNTAS, SERVICOS, SITE_CONFIG } from '../config/content'
+import { Section, WhatsAppIcon } from './UI'
+
+export default function Quiz() {
+  const [etapa, setEtapa] = useState(0) // 0 = intro, 1-4 = perguntas, 5 = resultado
+  const [respostas, setRespostas] = useState({})
+  const [solucaoRecomendada, setSolucaoRecomendada] = useState(null)
+  const [selectedOption, setSelectedOption] = useState(null)
+
+  const totalPerguntas = QUIZ_PERGUNTAS.length
+
+  const iniciarQuiz = () => setEtapa(1)
+
+  const selecionarOpcao = (opcao) => {
+    setSelectedOption(opcao)
+  }
+
+  const confirmarResposta = () => {
+    if (!selectedOption) return
+
+    const perguntaIndex = etapa - 1
+    const novasRespostas = { ...respostas, [perguntaIndex]: selectedOption }
+    setRespostas(novasRespostas)
+    setSelectedOption(null)
+
+    if (etapa < totalPerguntas) {
+      setEtapa(etapa + 1)
+    } else {
+      calcularResultado(novasRespostas)
+      setEtapa(totalPerguntas + 1)
+    }
+  }
+
+  const voltarPergunta = () => {
+    if (etapa > 1) {
+      setEtapa(etapa - 1)
+      setSelectedOption(respostas[etapa - 2] || null)
+    }
+  }
+
+  const calcularResultado = (respostas) => {
+    const segmento = respostas[0]
+    const solucaoId = segmento?.solucao || 'consultoria'
+    const solucao = SERVICOS.find(s => s.id === solucaoId) || SERVICOS[0]
+    setSolucaoRecomendada(solucao)
+  }
+
+  const reiniciar = () => {
+    setEtapa(0)
+    setRespostas({})
+    setSolucaoRecomendada(null)
+    setSelectedOption(null)
+  }
+
+  // ==========================================
+  // INTRO DO QUIZ
+  // ==========================================
+  if (etapa === 0) {
+    return (
+      <Section id="quiz" className="bg-gradient-to-b from-capi-surface/20 to-transparent">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-capi-orange/20 to-capi-cyan/20 rounded-full flex items-center justify-center">
+            <span className="text-5xl">🎯</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            Qual solução é <span className="gradient-text">ideal para você</span>?
+          </h2>
+          <p className="text-gray-400 mb-8 text-lg">
+            Responda 4 perguntas rápidas e descubra qual automação vai transformar seu negócio.
+          </p>
+          
+          {/* Features do quiz */}
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            {[
+              { icon: '⚡', text: 'Menos de 1 min' },
+              { icon: '🎁', text: 'Resultado na hora' },
+              { icon: '💬', text: 'Sem compromisso' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-2 bg-capi-surface/50 px-4 py-2 rounded-full text-sm text-gray-400">
+                <span>{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={iniciarQuiz}
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-capi-orange to-capi-cyan text-white px-10 py-5 rounded-xl font-bold text-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,107,53,0.4)]"
+          >
+            Descobrir minha solução
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </button>
+        </div>
+      </Section>
+    )
+  }
+
+  // ==========================================
+  // PERGUNTAS
+  // ==========================================
+  if (etapa >= 1 && etapa <= totalPerguntas) {
+    const perguntaAtual = QUIZ_PERGUNTAS[etapa - 1]
+    const progresso = (etapa / totalPerguntas) * 100
+
+    return (
+      <Section id="quiz" className="bg-gradient-to-b from-capi-surface/20 to-transparent">
+        <div className="max-w-2xl mx-auto">
+          {/* Header com progresso */}
+          <div className="mb-8">
+            {/* Steps indicator */}
+            <div className="flex justify-center gap-2 mb-4">
+              {QUIZ_PERGUNTAS.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index < etapa - 1
+                      ? 'bg-capi-cyan'
+                      : index === etapa - 1
+                      ? 'bg-gradient-to-r from-capi-orange to-capi-cyan scale-125'
+                      : 'bg-capi-border'
+                  }`}
+                />
+              ))}
+            </div>
+            
+            {/* Progress bar */}
+            <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <span>Pergunta {etapa} de {totalPerguntas}</span>
+              <span>{Math.round(progresso)}%</span>
+            </div>
+            <div className="h-2 bg-capi-surface-light rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-capi-orange to-capi-cyan transition-all duration-500 ease-out"
+                style={{ width: `${progresso}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Card da pergunta */}
+          <div className="bg-capi-surface border border-capi-border rounded-3xl p-6 sm:p-8">
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-8 text-center">
+              {perguntaAtual.pergunta}
+            </h3>
+
+            {/* Opções */}
+            <div className="grid gap-3">
+              {perguntaAtual.opcoes.map((opcao, index) => {
+                const isSelected = selectedOption?.valor === opcao.valor
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => selecionarOpcao(opcao)}
+                    className={`w-full text-left rounded-xl p-4 sm:p-5 transition-all duration-300 border-2 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-capi-orange/20 to-capi-cyan/20 border-capi-cyan text-white'
+                        : 'bg-capi-surface-light border-capi-border hover:border-capi-cyan/50 text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                        isSelected ? 'border-capi-cyan bg-capi-cyan' : 'border-gray-500'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/>
+                          </svg>
+                        )}
+                      </span>
+                      <span className="text-base sm:text-lg">{opcao.texto}</span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Botões de navegação */}
+            <div className="flex justify-between mt-8 gap-4">
+              <button
+                onClick={voltarPergunta}
+                disabled={etapa === 1}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  etapa === 1
+                    ? 'text-gray-600 cursor-not-allowed'
+                    : 'text-gray-400 hover:text-white hover:bg-capi-surface-light'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Voltar
+              </button>
+
+              <button
+                onClick={confirmarResposta}
+                disabled={!selectedOption}
+                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all duration-300 ${
+                  selectedOption
+                    ? 'bg-gradient-to-r from-capi-orange to-capi-cyan text-white hover:scale-105 hover:shadow-lg'
+                    : 'bg-capi-border text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {etapa === totalPerguntas ? 'Ver resultado' : 'Próxima'}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Section>
+    )
+  }
+
+  // ==========================================
+  // RESULTADO
+  // ==========================================
+  return (
+    <Section id="quiz" className="bg-gradient-to-b from-capi-surface/20 to-transparent">
+      <div className="max-w-2xl mx-auto text-center">
+        {/* Celebração */}
+        <div className="relative mb-8">
+          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-capi-orange/20 to-capi-cyan/20 rounded-full flex items-center justify-center animate-bounce-slow">
+            <span className="text-5xl">🎉</span>
+          </div>
+        </div>
+        
+        <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+          Sua solução ideal é o <span className="gradient-text">{solucaoRecomendada?.titulo}</span>!
+        </h2>
+        
+        <p className="text-gray-400 mb-8 text-lg">
+          {solucaoRecomendada?.descricao.texto}
+        </p>
+
+        {/* Card da solução */}
+        <div className="bg-gradient-to-br from-capi-surface to-capi-surface-light border border-capi-cyan/30 rounded-2xl p-6 mb-8 text-left">
+          <div className="flex items-center gap-4 mb-4">
+            {solucaoRecomendada?.icone.startsWith?.('http') ? (
+              <img src={solucaoRecomendada.icone} alt={solucaoRecomendada.titulo} className="w-14 h-14 object-contain"/>
+            ) : (
+              <span className="text-4xl">{solucaoRecomendada?.icone}</span>
+            )}
+            <div>
+              <h3 className="text-xl font-bold text-white">{solucaoRecomendada?.titulo}</h3>
+              <p className="text-gray-400 text-sm">{solucaoRecomendada?.subtitulo}</p>
+            </div>
+          </div>
+          
+          <div className="grid sm:grid-cols-3 gap-3">
+            {solucaoRecomendada?.descricao.beneficios.map((beneficio, i) => (
+              <div key={i} className="flex items-center gap-2 bg-capi-dark/50 rounded-lg px-3 py-2">
+                <span className="text-capi-cyan">✓</span>
+                <span className="text-gray-300 text-sm">{beneficio}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a 
+            href={`https://wa.me/${SITE_CONFIG.whatsapp}?text=${encodeURIComponent(`Olá! Fiz o quiz no site e a solução recomendada foi ${solucaoRecomendada?.titulo}. Quero saber mais!`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-capi-orange to-capi-cyan text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,107,53,0.4)]"
+          >
+            <WhatsAppIcon className="w-6 h-6" />
+            Falar com especialista
+          </a>
+          <a 
+            href="#contato"
+            className="inline-flex items-center justify-center gap-2 bg-capi-surface hover:bg-capi-surface-light border border-capi-border text-gray-300 px-8 py-4 rounded-xl font-semibold transition-all duration-300"
+          >
+            Solicitar diagnóstico
+          </a>
+        </div>
+
+        {/* Refazer */}
+        <button
+          onClick={reiniciar}
+          className="mt-6 text-gray-500 hover:text-gray-300 transition-colors text-sm"
+        >
+          Refazer o quiz
+        </button>
+      </div>
+    </Section>
+  )
+}
